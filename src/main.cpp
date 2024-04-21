@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <glm/glm.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
-
 #include "Image.h"
 
 // This allows you to skip the `std::` in front of C++ standard library
@@ -21,13 +22,51 @@ double RANDOM_COLORS[7][3] = {
 	{0.6350,    0.0780,    0.1840},
 };
 
+int scene;
+int imageSize;
+string outputFileName;
+
+vector<glm::vec3> calcRayDirections(glm::vec3 cameraPos, float fov, float aspectRatio, int dimensions) {
+	float sideLength = 2 * tan(fov/2);
+	float stepSize = sideLength / dimensions;
+	float startingPoint = -sideLength / 2;
+
+	vector<glm::vec3> result;
+
+	for (int row = 0; row < dimensions; row++) {
+		float y = startingPoint + (row * stepSize) + (stepSize / 2);
+		for (int col = 0; col < dimensions; col++) {
+			float x = startingPoint + (col * stepSize) + (stepSize / 2);
+			glm::vec3 pixelPos(x, y, cameraPos.z - 1);
+			glm::vec3 rayDir = glm::normalize(pixelPos - cameraPos);
+			result.push_back(rayDir);
+		}
+
+	}
+	return result;
+}
+
 int main(int argc, char **argv)
 {
 	if(argc < 2) {
 		cout << "Usage: A1 meshfile" << endl;
 		return 0;
 	}
-	string meshName(argv[1]);
+	scene = stoi(argv[1]);
+	imageSize = stoi(argv[2]);
+	outputFileName = argv[3];
+
+	glm::vec3 cameraPos(0, 0, 5);
+	float fov = glm::radians(45.0);
+	float aspectRatio = 1;
+	int dimensions = 3;
+
+	vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
+
+	for (size_t i = 0; i < results.size(); i++) {
+		cout << results[i].x << ", " << results[i].y << ", " << results[i].z << endl;
+	}
+	return 0;
 
 	// Load geometry
 	vector<float> posBuf; // list of vertex positions
@@ -37,7 +76,7 @@ int main(int argc, char **argv)
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
 	string errStr;
-	bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &errStr, meshName.c_str());
+	bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &errStr, outputFileName.c_str());
 	if(!rc) {
 		cerr << errStr << endl;
 	} else {

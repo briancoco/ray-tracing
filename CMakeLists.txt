@@ -36,3 +36,22 @@ ELSE()
 	# Enable all pedantic warnings.
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
 ENDIF()
+
+SET(GLM_INCLUDE_DIR "$ENV{GLM_INCLUDE_DIR}")
+IF(NOT GLM_INCLUDE_DIR)
+	# The environment variable was not set
+	SET(ERR_MSG "Please point the environment variable GLM_INCLUDE_DIR to the root directory of your GLM installation.")
+	IF(WIN32)
+		# On Windows, try the default location
+		MESSAGE(STATUS "Looking for GLM in ${DEF_DIR_GLM}")
+		IF(IS_DIRECTORY ${DEF_DIR_GLM})
+			MESSAGE(STATUS "Found!")
+			SET(GLM_INCLUDE_DIR ${DEF_DIR_GLM})
+		ELSE()
+			MESSAGE(FATAL_ERROR ${ERR_MSG})
+		ENDIF()
+	ELSE()
+		MESSAGE(FATAL_ERROR ${ERR_MSG})
+	ENDIF()
+ENDIF()
+INCLUDE_DIRECTORIES(${GLM_INCLUDE_DIR})
