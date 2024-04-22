@@ -65,52 +65,49 @@ int main(int argc, char **argv)
 	float aspectRatio = 1;
 	int dimensions = 3;
 
+	if (scene == 1 || scene == 2) {
 
 
-	//vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
-	//SHOULD CREATE A SCENE CLASS
+		std::vector<Shape*> shapes;
+		std::vector<Light*> lights;
+		vector<Ray*> rays = calcRayDirections(cameraPos, fov, aspectRatio, imageSize);
 
-	std::vector<Shape*> shapes;
-	std::vector<Light*> lights;
-	vector<Ray*> rays = calcRayDirections(cameraPos, fov, aspectRatio, imageSize);
+		Light* light = new Light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
+		lights.push_back(light);
 
-	//Scene setup
-	Light* light = new Light(glm::vec3(-2.0, 1.0, 0.0), 1.0);
-	lights.push_back(light);
+		Sphere* redS = new Sphere();
+		redS->position = glm::vec3(-0.5, -1.0, 1.0);
+		redS->radius = 1;
+		redS->diffuse = glm::vec3(1.0, 0.0, 0.0);
+		redS->specular = glm::vec3(1.0, 1.0, 0.5);
+		redS->ambient = glm::vec3(0.1, 0.1, 0.1);
+		redS->exponent = 100.0;
 
-	Sphere* redS = new Sphere();
-	redS->position = glm::vec3(-0.5, -1.0, 1.0);
-	redS->radius = 1;
-	redS->diffuse = glm::vec3(1.0, 0.0, 0.0);
-	redS->specular = glm::vec3(1.0, 1.0, 0.5);
-	redS->ambient = glm::vec3(0.1, 0.1, 0.1);
-	redS->exponent = 100.0;
+		Sphere* greenS = new Sphere();
+		greenS->position = glm::vec3(0.5, -1.0, -1.0);
+		greenS->radius = 1;
+		greenS->diffuse = glm::vec3(0.0, 1.0, 0.0);
+		greenS->specular = glm::vec3(1.0, 1.0, 0.5);
+		greenS->ambient = glm::vec3(0.1, 0.1, 0.1);
+		greenS->exponent = 100.0;
 
-	Sphere* greenS = new Sphere();
-	greenS->position = glm::vec3(0.5, -1.0, -1.0);
-	greenS->radius = 1;
-	greenS->diffuse = glm::vec3(0.0, 1.0, 0.0);
-	greenS->specular = glm::vec3(1.0, 1.0, 0.5);
-	greenS->ambient = glm::vec3(0.1, 0.1, 0.1);
-	greenS->exponent = 100.0;
-
-	Sphere* blueS = new Sphere();
-	blueS->position = glm::vec3(0.0, 1.0, 0.0);
-	blueS->radius = 1;
-	blueS->diffuse = glm::vec3(0.0, 0.0, 1.0);
-	blueS->specular = glm::vec3(1.0, 1.0, 0.5);
-	blueS->ambient = glm::vec3(0.1, 0.1, 0.1);
-	blueS->exponent = 100.0;
+		Sphere* blueS = new Sphere();
+		blueS->position = glm::vec3(0.0, 1.0, 0.0);
+		blueS->radius = 1;
+		blueS->diffuse = glm::vec3(0.0, 0.0, 1.0);
+		blueS->specular = glm::vec3(1.0, 1.0, 0.5);
+		blueS->ambient = glm::vec3(0.1, 0.1, 0.1);
+		blueS->exponent = 100.0;
 
 
-	shapes.push_back(redS);
-	shapes.push_back(greenS);
-	shapes.push_back(blueS);
+		shapes.push_back(redS);
+		shapes.push_back(greenS);
+		shapes.push_back(blueS);
 
-	Scene scene(shapes, lights, rays, imageSize, outputFileName);
+		Scene scene(shapes, lights, rays, imageSize, outputFileName);
 
-	scene.draw();
-
+		scene.draw();
+	}
 
 	
 

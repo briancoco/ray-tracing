@@ -70,8 +70,6 @@ public:
 		glm::vec3 ca = ambient;
 		glm::vec3 n = calcNorm(x);
 		for (size_t i = 0; i < lights.size(); i++) {
-
-			//std::cout << "HERE" << std::endl;
 			glm::vec3 l = glm::normalize(lights[i]->position - position);
 			glm::vec3 e = glm::normalize(glm::vec3(0, 0, 5) - position);
 			glm::vec3 h = glm::normalize(l + e);
@@ -80,7 +78,7 @@ public:
 			glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(h, n), exponent));
 
 			glm::vec3 color = lights[i]->intensity * (cd + cs);
-			//std::cout << color.r << ", " << color.g << ", " << color.b << std::endl;
+
 			result += color;
 
 		}

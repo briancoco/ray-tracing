@@ -60,13 +60,30 @@ public:
 					//std::cout << "NO HITPOINTS" << std::endl;
 					continue;
 				}
-
-				//std::cout << "HITPOINTS "  << resHP.x << ", " << resHP.y << ", " << resHP.z << std::endl;
+				
+				//calculate shadow rays for lights and create a filtered list of lights
+				//that affect the BP for this hitpoint
+				std::vector<Light*> filteredLights;
+				for (size_t i = 0; i < lights.size(); i++) {
+					Ray* shadowRay = new Ray(glm::normalize(lights[i]->position - resHP), resHP);
+					//traverse thru shapes in scene, if shadowRay hits any dont include light in filtered light list
+					bool inShadow = false;
+					for (size_t j = 0; j < shapes.size(); j++) {
+						if (j == shapeIdx) continue;
+						std::vector<float> ts = shapes[j]->calcT(shadowRay);
+						if (!ts.empty()) {
+							inShadow = true;
+							break;
+						}
+					}
+					if (!inShadow) {
+						filteredLights.push_back(lights[i]);
+					}
+				}
 
 				//calculate BP coloring for our hitpoint
-				glm::vec3 color = shapes[shapeIdx]->calcBP(resHP, lights);
-				//std::cout << color.r << ", " << color.g << ", " << color.b << std::endl;
-
+				glm::vec3 color = shapes[shapeIdx]->calcBP(resHP, filteredLights);
+				
 				img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
 
 			}
