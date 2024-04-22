@@ -1,12 +1,14 @@
 #ifndef SPHERE_CPP
 #define SPHERE_CPP
 
+#include <iostream>
 #include <glm/glm.hpp>
 #include <vector>
 #include "./Ray.cpp";
 #include "./Light.cpp";
+#include "Shape.cpp"
 
-class Sphere {
+class Sphere: public Shape {
 public:
 	glm::vec3 position;
 	float radius;
@@ -41,28 +43,49 @@ public:
 		return r->rayOrigin + r->rayDir * t;
 	}
 
+	glm::vec3 calcClosestHit(std::vector<float> ts, Ray* r) {
+		//assuming there are hits
+		glm::vec3 res = calcHit(ts[0], r);
+		for (size_t i = 1; i < ts.size(); i++) {
+			glm::vec3 hp = calcHit(ts[i], r);
+			if (hp.z > res.z) {
+				res = hp;
+			}
+		}
+
+		return res;
+	}
+
 	glm::vec3 calcNorm(glm::vec3 x) {
 		return glm::normalize((x - position) / radius);
 	}
 
-	glm::vec3 calcBP(glm::vec3 x, Light light) {
+	glm::vec3 calcBP(glm::vec3 x, std::vector<Light*> lights) {
 		//calculate normal
 		//calculate light vec
 		//calculate eye vec
 		//calculate h vec
-
-		glm::vec3 n = calcNorm(x);
-		glm::vec3 l = glm::normalize(light.position - position);
-		glm::vec3 e = glm::normalize(glm::vec3(0, 0, 5) - position);
-		glm::vec3 h = glm::normalize(l + e);
-
+		glm::vec3 result(0.0f, 0.0f, 0.0f);
+		
 		glm::vec3 ca = ambient;
-		glm::vec3 cd = diffuse * glm::max(0.0f, glm::dot(l, n));
-		glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(h, n), exponent));
+		glm::vec3 n = calcNorm(x);
+		for (size_t i = 0; i < lights.size(); i++) {
 
-		glm::vec3 color = ca + light.intensity * (cd + cs);
+			//std::cout << "HERE" << std::endl;
+			glm::vec3 l = glm::normalize(lights[i]->position - position);
+			glm::vec3 e = glm::normalize(glm::vec3(0, 0, 5) - position);
+			glm::vec3 h = glm::normalize(l + e);
 
-		return glm::clamp(color, 0.0f, 1.0f);
+			glm::vec3 cd = diffuse * glm::max(0.0f, glm::dot(l, n));
+			glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(h, n), exponent));
+
+			glm::vec3 color = lights[i]->intensity * (cd + cs);
+			//std::cout << color.r << ", " << color.g << ", " << color.b << std::endl;
+			result += color;
+
+		}
+		result += ca;
+		return glm::clamp(result, 0.0f, 1.0f);
 
 
 	}

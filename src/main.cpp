@@ -2,13 +2,13 @@
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
-
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 #include "Image.h"
 #include "Sphere.cpp"
 #include "Light.cpp"
 #include "Ray.cpp"
+#include "Scene.cpp"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -70,56 +70,51 @@ int main(int argc, char **argv)
 	//vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
 	//SHOULD CREATE A SCENE CLASS
 
-	//Scene setup
-	Image img(imageSize, imageSize);
-
-	Light light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
-
-	Sphere redS;
-	redS.position = glm::vec3(-0.5, -1.0, 1.0);
-	redS.radius = 1;
-	redS.diffuse = glm::vec3(1.0, 0.0, 0.0);
-	redS.specular = glm::vec3(1.0, 1.0, 0.5);
-	redS.ambient = glm::vec3(0.1, 0.1, 0.1);
-	redS.exponent = 100.0;
-
+	std::vector<Shape*> shapes;
+	std::vector<Light*> lights;
 	vector<Ray*> rays = calcRayDirections(cameraPos, fov, aspectRatio, imageSize);
+
+	//Scene setup
+	Light* light = new Light(glm::vec3(-2.0, 1.0, 0.0), 1.0);
+	lights.push_back(light);
+
+	Sphere* redS = new Sphere();
+	redS->position = glm::vec3(-0.5, -1.0, 1.0);
+	redS->radius = 1;
+	redS->diffuse = glm::vec3(1.0, 0.0, 0.0);
+	redS->specular = glm::vec3(1.0, 1.0, 0.5);
+	redS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	redS->exponent = 100.0;
+
+	Sphere* greenS = new Sphere();
+	greenS->position = glm::vec3(0.5, -1.0, -1.0);
+	greenS->radius = 1;
+	greenS->diffuse = glm::vec3(0.0, 1.0, 0.0);
+	greenS->specular = glm::vec3(1.0, 1.0, 0.5);
+	greenS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	greenS->exponent = 100.0;
+
+	Sphere* blueS = new Sphere();
+	blueS->position = glm::vec3(0.0, 1.0, 0.0);
+	blueS->radius = 1;
+	blueS->diffuse = glm::vec3(0.0, 0.0, 1.0);
+	blueS->specular = glm::vec3(1.0, 1.0, 0.5);
+	blueS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	blueS->exponent = 100.0;
+
+
+	shapes.push_back(redS);
+	shapes.push_back(greenS);
+	shapes.push_back(blueS);
+
+	Scene scene(shapes, lights, rays, imageSize, outputFileName);
+
+	scene.draw();
+
+
 	
-	for (size_t i = 0; i < rays.size(); i++) {
-		//cout << rays[i]->rayDir.x << ", " << rays[i]->rayDir.y << ", " << rays[i]->rayDir.z << endl;
-	}
 
-	for (int y = 0; y < imageSize; y++) {
-		for (int x = 0; x < imageSize; x++) {
-
-			//ray corresponding to given pixel
-			Ray* r = rays[imageSize * y + x];
-
-			//calculating closest hitpoint
-			std::vector<float> ts = redS.calcT(r);
-			if (ts.empty()) {
-				continue;
-			}
-			glm::vec3 resHP = redS.calcHit(ts[0], r);
-			for (size_t i = 1; i < ts.size(); i++) {
-				glm::vec3 hitPoint = redS.calcHit(ts[i], r);
-				if (hitPoint.z > resHP.z) {
-					resHP = hitPoint;
-				}
-			}
-
-			//calculate pixel color
-			glm::vec3 color = redS.calcBP(resHP, light);
-			
-			//std::cout << color.r << ", " << color.g << ", " << color.b << endl;
-
-			img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
-		}
-	}
-
-	//Draw Scene HERE
 	
-	img.writeToFile(outputFileName);
 
 
 	return 0;
