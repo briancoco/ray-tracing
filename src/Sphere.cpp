@@ -18,10 +18,10 @@ public:
 
 
 	//calculate the t values of hits on the sphere
-	std::vector<float> calcT(Ray r) {
-		float a = glm::dot(r.rayDir, r.rayDir);
-		float b = 2 * glm::dot(r.rayOrigin - position, r.rayDir);
-		float c = glm::dot(r.rayOrigin - position, r.rayOrigin - position) - (radius * radius);
+	std::vector<float> calcT(Ray* r) {
+		float a = glm::dot(r->rayDir, r->rayDir);
+		float b = 2 * glm::dot(r->rayOrigin - position, r->rayDir);
+		float c = glm::dot(r->rayOrigin - position, r->rayOrigin - position) - (radius * radius);
 		float d = pow(b, 2) - 4 * a * c;
 
 		std::vector<float> result;
@@ -37,8 +37,8 @@ public:
 
 	}
 
-	glm::vec3 calcHit(float t, Ray r) {
-		return r.rayOrigin + r.rayDir * t;
+	glm::vec3 calcHit(float t, Ray* r) {
+		return r->rayOrigin + r->rayDir * t;
 	}
 
 	glm::vec3 calcNorm(glm::vec3 x) {
@@ -57,10 +57,12 @@ public:
 		glm::vec3 h = glm::normalize(l + e);
 
 		glm::vec3 ca = ambient;
-		glm::vec3 cd = diffuse * glm::max(0.0f, glm::dot(n, l));
-		glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(n, h), exponent));
+		glm::vec3 cd = diffuse * glm::max(0.0f, glm::dot(l, n));
+		glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(h, n), exponent));
 
-		return ca + light.intensity * (cd + cs);
+		glm::vec3 color = ca + light.intensity * (cd + cs);
+
+		return glm::clamp(color, 0.0f, 1.0f);
 
 
 	}

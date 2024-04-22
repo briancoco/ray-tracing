@@ -65,6 +65,8 @@ int main(int argc, char **argv)
 	float aspectRatio = 1;
 	int dimensions = 3;
 
+
+
 	//vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
 	//SHOULD CREATE A SCENE CLASS
 
@@ -73,17 +75,51 @@ int main(int argc, char **argv)
 
 	Light light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
 
-	Sphere s;
-	s.position = glm::vec3(0.0f, 0.0f, 0.0f);
-	s.radius = 1;
-	s.diffuse = glm::vec3(1.0, 0.0, 0.0);
-	s.specular = glm::vec3(1.0, 1.0, 0.5);
-	s.ambient = glm::vec3(0.1, 0.1, 0.1);
+	Sphere redS;
+	redS.position = glm::vec3(-0.5, -1.0, 1.0);
+	redS.radius = 1;
+	redS.diffuse = glm::vec3(1.0, 0.0, 0.0);
+	redS.specular = glm::vec3(1.0, 1.0, 0.5);
+	redS.ambient = glm::vec3(0.1, 0.1, 0.1);
+	redS.exponent = 100.0;
 
 	vector<Ray*> rays = calcRayDirections(cameraPos, fov, aspectRatio, imageSize);
+	
+	for (size_t i = 0; i < rays.size(); i++) {
+		//cout << rays[i]->rayDir.x << ", " << rays[i]->rayDir.y << ", " << rays[i]->rayDir.z << endl;
+	}
+
+	for (int y = 0; y < imageSize; y++) {
+		for (int x = 0; x < imageSize; x++) {
+
+			//ray corresponding to given pixel
+			Ray* r = rays[imageSize * y + x];
+
+			//calculating closest hitpoint
+			std::vector<float> ts = redS.calcT(r);
+			if (ts.empty()) {
+				continue;
+			}
+			glm::vec3 resHP = redS.calcHit(ts[0], r);
+			for (size_t i = 1; i < ts.size(); i++) {
+				glm::vec3 hitPoint = redS.calcHit(ts[i], r);
+				if (hitPoint.z > resHP.z) {
+					resHP = hitPoint;
+				}
+			}
+
+			//calculate pixel color
+			glm::vec3 color = redS.calcBP(resHP, light);
+			
+			//std::cout << color.r << ", " << color.g << ", " << color.b << endl;
+
+			img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
+		}
+	}
 
 	//Draw Scene HERE
 	
+	img.writeToFile(outputFileName);
 
 
 	return 0;
