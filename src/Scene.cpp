@@ -65,15 +65,24 @@ public:
 				//that affect the BP for this hitpoint
 				std::vector<Light*> filteredLights;
 				for (size_t i = 0; i < lights.size(); i++) {
-					Ray* shadowRay = new Ray(glm::normalize(lights[i]->position - resHP), resHP);
+					glm::vec3 rayDir = glm::normalize(lights[i]->position - resHP);
+					glm::vec3 offset = rayDir * 0.1f;
+					Ray* shadowRay = new Ray(glm::normalize(lights[i]->position - resHP), resHP + offset);
 					//traverse thru shapes in scene, if shadowRay hits any dont include light in filtered light list
 					bool inShadow = false;
 					for (size_t j = 0; j < shapes.size(); j++) {
-						if (j == shapeIdx) continue;
+						//if (j == shapeIdx) continue;
 						std::vector<float> ts = shapes[j]->calcT(shadowRay);
 						if (!ts.empty()) {
-							inShadow = true;
-							break;
+							for (size_t z = 0; z < ts.size(); z++) {
+								if (ts[z] >= 0) {
+									inShadow = true;
+									break;
+								}
+							}
+							if (inShadow) {
+								break;
+							}
 						}
 					}
 					if (!inShadow) {
