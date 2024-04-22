@@ -6,6 +6,9 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 #include "Image.h"
+#include "Sphere.cpp"
+#include "Light.cpp"
+#include "Ray.cpp"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -26,12 +29,12 @@ int scene;
 int imageSize;
 string outputFileName;
 
-vector<glm::vec3> calcRayDirections(glm::vec3 cameraPos, float fov, float aspectRatio, int dimensions) {
+vector<Ray*> calcRayDirections(glm::vec3 cameraPos, float fov, float aspectRatio, int dimensions) {
 	float sideLength = 2 * tan(fov/2);
 	float stepSize = sideLength / dimensions;
 	float startingPoint = -sideLength / 2;
 
-	vector<glm::vec3> result;
+	vector<Ray*> result;
 
 	for (int row = 0; row < dimensions; row++) {
 		float y = startingPoint + (row * stepSize) + (stepSize / 2);
@@ -39,7 +42,8 @@ vector<glm::vec3> calcRayDirections(glm::vec3 cameraPos, float fov, float aspect
 			float x = startingPoint + (col * stepSize) + (stepSize / 2);
 			glm::vec3 pixelPos(x, y, cameraPos.z - 1);
 			glm::vec3 rayDir = glm::normalize(pixelPos - cameraPos);
-			result.push_back(rayDir);
+			Ray* r = new Ray(rayDir, cameraPos);
+			result.push_back(r);
 		}
 
 	}
@@ -61,59 +65,26 @@ int main(int argc, char **argv)
 	float aspectRatio = 1;
 	int dimensions = 3;
 
-	vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
+	//vector<glm::vec3> results = calcRayDirections(cameraPos, fov, aspectRatio, dimensions);
+	//SHOULD CREATE A SCENE CLASS
 
-	for (size_t i = 0; i < results.size(); i++) {
-		cout << results[i].x << ", " << results[i].y << ", " << results[i].z << endl;
-	}
-	return 0;
+	//Scene setup
+	Image img(imageSize, imageSize);
 
-	// Load geometry
-	vector<float> posBuf; // list of vertex positions
-	vector<float> norBuf; // list of vertex normals
-	vector<float> texBuf; // list of vertex texture coords
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-	string errStr;
-	bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &errStr, outputFileName.c_str());
-	if(!rc) {
-		cerr << errStr << endl;
-	} else {
-		// Some OBJ files have different indices for vertex positions, normals,
-		// and texture coordinates. For example, a cube corner vertex may have
-		// three different normals. Here, we are going to duplicate all such
-		// vertices.
-		// Loop over shapes
-		for(size_t s = 0; s < shapes.size(); s++) {
-			// Loop over faces (polygons)
-			size_t index_offset = 0;
-			for(size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-				size_t fv = shapes[s].mesh.num_face_vertices[f];
-				// Loop over vertices in the face.
-				for(size_t v = 0; v < fv; v++) {
-					// access to vertex
-					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-					posBuf.push_back(attrib.vertices[3*idx.vertex_index+0]);
-					posBuf.push_back(attrib.vertices[3*idx.vertex_index+1]);
-					posBuf.push_back(attrib.vertices[3*idx.vertex_index+2]);
-					if(!attrib.normals.empty()) {
-						norBuf.push_back(attrib.normals[3*idx.normal_index+0]);
-						norBuf.push_back(attrib.normals[3*idx.normal_index+1]);
-						norBuf.push_back(attrib.normals[3*idx.normal_index+2]);
-					}
-					if(!attrib.texcoords.empty()) {
-						texBuf.push_back(attrib.texcoords[2*idx.texcoord_index+0]);
-						texBuf.push_back(attrib.texcoords[2*idx.texcoord_index+1]);
-					}
-				}
-				index_offset += fv;
-				// per-face material (IGNORE)
-				shapes[s].mesh.material_ids[f];
-			}
-		}
-	}
-	cout << "Number of vertices: " << posBuf.size()/3 << endl;
+	Light light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
+
+	Sphere s;
+	s.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	s.radius = 1;
+	s.diffuse = glm::vec3(1.0, 0.0, 0.0);
+	s.specular = glm::vec3(1.0, 1.0, 0.5);
+	s.ambient = glm::vec3(0.1, 0.1, 0.1);
+
+	vector<Ray*> rays = calcRayDirections(cameraPos, fov, aspectRatio, imageSize);
+
+	//Draw Scene HERE
 	
+
+
 	return 0;
 }

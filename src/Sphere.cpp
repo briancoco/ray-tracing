@@ -42,11 +42,27 @@ public:
 	}
 
 	glm::vec3 calcNorm(glm::vec3 x) {
-		return (x - position) / radius;
+		return glm::normalize((x - position) / radius);
 	}
 
 	glm::vec3 calcBP(glm::vec3 x, Light light) {
-	
+		//calculate normal
+		//calculate light vec
+		//calculate eye vec
+		//calculate h vec
+
+		glm::vec3 n = calcNorm(x);
+		glm::vec3 l = glm::normalize(light.position - position);
+		glm::vec3 e = glm::normalize(glm::vec3(0, 0, 5) - position);
+		glm::vec3 h = glm::normalize(l + e);
+
+		glm::vec3 ca = ambient;
+		glm::vec3 cd = diffuse * glm::max(0.0f, glm::dot(n, l));
+		glm::vec3 cs = specular * glm::max(0.0f, pow(glm::dot(n, h), exponent));
+
+		return ca + light.intensity * (cd + cs);
+
+
 	}
 
 
