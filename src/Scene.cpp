@@ -47,6 +47,7 @@ public:
 					if (ts.empty()) {
 						continue;
 					}
+					
 
 					glm::vec3 closestHP = shapes[i]->calcClosestHit(ts, r);
 					if (shapeIdx == -1 || closestHP.z > resHP.z) {

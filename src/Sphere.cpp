@@ -31,10 +31,23 @@ public:
 			return {};
 		}
 		else if (d > 0) {
-			return { (-b + sqrt(d)) / (2 * a), (-b - sqrt(d)) / (2 * a) };
+			float t1 = (-b + sqrt(d)) / (2 * a);
+			float t2 = (-b - sqrt(d)) / (2 * a);
+			if (t1 >= 0) {
+				result.push_back(t1);
+			}
+			if (t2 >= 0) {
+				result.push_back(t2);
+			}
+			
+			return result;
 		}
 		else {
-			return { -b / (2 * a)};
+			float t = -b / (2 * a);
+			if (t >= 0) {
+				return { t };
+			}
+			return {};
 		}
 
 	}
