@@ -10,6 +10,7 @@
 #include "Ray.cpp"
 #include "Scene.cpp"
 #include "Plane.cpp"
+#include "Ellipsoid.cpp"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -130,9 +131,18 @@ int main(int argc, char **argv)
 		greenS->specular = glm::vec3(1.0, 1.0, 0.5);
 		greenS->ambient = glm::vec3(0.1, 0.1, 0.1);
 		greenS->exponent = 100.0;
+
+		Ellipsoid* redE = new Ellipsoid();
+		redE->position = glm::vec3(0.5, 0.0, 0.5);
+		redE->scale = glm::vec3(0.5, 0.6, 0.2);
+		redE->diffuse = glm::vec3(1.0, 0.0, 0.0);
+		redE->specular = glm::vec3(1.0, 1.0, 0.5);
+		redE->ambient = glm::vec3(0.1, 0.1, 0.1);
+		redE->exponent = 100.0;
 		
 		shapes.push_back(plane);
 		shapes.push_back(greenS);
+		shapes.push_back(redE);
 
 
 		Scene scene(shapes, lights, rays, imageSize, outputFileName);
