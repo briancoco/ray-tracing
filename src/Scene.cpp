@@ -49,7 +49,7 @@ public:
 					}
 					
 
-					glm::vec3 closestHP = shapes[i]->calcClosestHit(ts, r);
+					glm::vec3 closestHP = shapes[i]->calcClosestHit(glm::vec3(0, 0, 5), ts, r);
 					if (shapeIdx == -1 || closestHP.z > resHP.z) {
 						resHP = closestHP;
 						shapeIdx = i;
@@ -69,6 +69,7 @@ public:
 					glm::vec3 rayDir = glm::normalize(lights[i]->position - resHP);
 					glm::vec3 offset = rayDir * 0.1f;
 					Ray* shadowRay = new Ray(glm::normalize(lights[i]->position - resHP), resHP + offset);
+					//float tLight = (lights[i]->position - shadowRay->rayOrigin) * glm::inverse(shadowRay->rayDir);
 					//traverse thru shapes in scene, if shadowRay hits any dont include light in filtered light list
 					bool inShadow = false;
 					for (size_t j = 0; j < shapes.size(); j++) {
@@ -76,7 +77,7 @@ public:
 						std::vector<float> ts = shapes[j]->calcT(shadowRay);
 						if (!ts.empty()) {
 							for (size_t z = 0; z < ts.size(); z++) {
-								if (ts[z] >= 0) {
+								if (ts[z] >= 0 && glm::length(lights[i]->position - shadowRay->rayOrigin) > glm::length(shapes[j]->calcHit(ts[z], shadowRay) - shadowRay->rayOrigin)) {
 									inShadow = true;
 									break;
 								}
@@ -92,7 +93,7 @@ public:
 				}
 
 				//calculate BP coloring for our hitpoint
-				glm::vec3 color = shapes[shapeIdx]->calcBP(resHP, filteredLights);
+				glm::vec3 color = shapes[shapeIdx]->isReflective ? shapes[shapeIdx]->calcRefl(resHP, r, shapes, lights) : shapes[shapeIdx]->calcBP(glm::vec3(0, 0, 5), resHP, filteredLights);
 				
 				img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
 

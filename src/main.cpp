@@ -149,6 +149,75 @@ int main(int argc, char **argv)
 
 		scene.draw();
 	}
+	else if (scene == 4) {
+		Light* l1 = new Light(glm::vec3(-1.0, 2.0, 1.0), 0.5);
+		Light* l2 = new Light(glm::vec3(0.5, -0.5, 0.0), 0.5);
+
+		lights.push_back(l1);
+		lights.push_back(l2);
+
+		Plane* plane = new Plane();
+		plane->planePoint = glm::vec3(0.0, -1.0, 0.0);
+		plane->planeNorm = glm::normalize(glm::vec3(0.0, 1.0, 0.0));
+		plane->diffuse = glm::vec3(1.0, 1.0, 1.0);
+		plane->specular = glm::vec3(0.0, 0.0, 0.0);
+		plane->ambient = glm::vec3(0.1, 0.1, 0.1);
+		plane->exponent = 0.0;
+
+		Plane* backPlane = new Plane();
+		backPlane->planePoint = glm::vec3(0.0, 0.0, -3.0);
+		backPlane->planeNorm = glm::normalize(glm::vec3(0.0, 0.0, 1.0));
+		backPlane->diffuse = glm::vec3(1.0, 1.0, 1.0);
+		backPlane->specular = glm::vec3(0.0, 0.0, 0.0);
+		backPlane->ambient = glm::vec3(0.1, 0.1, 0.1);
+		backPlane->exponent = 0.0;
+
+		Sphere* redS = new Sphere();
+		redS->position = glm::vec3(0.5, -0.7, 0.5);
+		redS->radius = 0.3;
+		redS->diffuse = glm::vec3(1.0, 0.0, 0.0);
+		redS->specular = glm::vec3(1.0, 1.0, 0.5);
+		redS->ambient = glm::vec3(0.1, 0.1, 0.1);
+		redS->exponent = 100.0;
+
+		Sphere* blueS = new Sphere();
+		blueS->position = glm::vec3(1.0, -0.7, 0.0);
+		blueS->radius = 0.3;
+		blueS->diffuse = glm::vec3(0.0, 0.0, 1.0);
+		blueS->specular = glm::vec3(1.0, 1.0, 0.5);
+		blueS->ambient = glm::vec3(0.1, 0.1, 0.1);
+		blueS->exponent = 100.0;
+
+		Sphere* refS1 = new Sphere();
+		refS1->position = glm::vec3(-0.5, 0.0, -0.5);
+		refS1->radius = 1;
+		refS1->diffuse = glm::vec3(1.0, 0.0, 0.0);
+		refS1->specular = glm::vec3(1.0, 1.0, 0.5);
+		refS1->ambient = glm::vec3(0.1, 0.1, 0.1);
+		refS1->exponent = 100.0;
+		refS1->isReflective = true;
+
+		Sphere* refS2 = new Sphere();
+		refS2->position = glm::vec3(1.5, 0.0, -1.5);
+		refS2->radius = 1;
+		refS2->diffuse = glm::vec3(0.0, 0.0, 1.0);
+		refS2->specular = glm::vec3(1.0, 1.0, 0.5);
+		refS2->ambient = glm::vec3(0.1, 0.1, 0.1);
+		refS2->exponent = 100.0;
+		refS2->isReflective = true;
+
+		shapes.push_back(plane);
+		shapes.push_back(backPlane);
+		shapes.push_back(redS);
+		shapes.push_back(blueS);
+		shapes.push_back(refS1);
+		shapes.push_back(refS2);
+
+		Scene scene(shapes, lights, rays, imageSize, outputFileName);
+
+		scene.draw();
+
+	}
 
 	
 
