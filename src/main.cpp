@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
 		scene.draw();
 	}
-	else if (scene == 4) {
+	else if (scene == 4 || scene == 5) {
 		Light* l1 = new Light(glm::vec3(-1.0, 2.0, 1.0), 0.5);
 		Light* l2 = new Light(glm::vec3(0.5, -0.5, 0.0), 0.5);
 
