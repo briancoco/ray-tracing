@@ -9,6 +9,7 @@
 class Shape {
 public:
 	bool isReflective = false;
+	bool isObj = false;
 	virtual std::vector<float> calcT(Ray* r) = 0;
 	virtual glm::vec3 calcHit(float t, Ray* r) = 0;
 	virtual glm::vec3 calcNorm(glm::vec3 x) = 0;
