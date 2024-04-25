@@ -12,6 +12,7 @@
 #include "Plane.cpp"
 #include "Ellipsoid.cpp"
 #include "Triangle.cpp"
+#include "ObjShape.cpp"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -274,6 +275,7 @@ int main(int argc, char **argv)
 		//construct triangles vector
 		std::vector<Triangle*> triangles;
 		int numTriangles = posBuf.size() / 9;
+
 		//traverse thru position and normal buffers constructing triangle objects for each triangle
 		for (int i = 0; i < numTriangles; i++) {
 			Triangle* t = new Triangle();
@@ -283,12 +285,40 @@ int main(int argc, char **argv)
 			t->nb = glm::vec3(norBuf[9 * i + 3], norBuf[9 * i + 4], norBuf[9 * i + 5]);
 			t->c = glm::vec3(posBuf[9 * i + 6], posBuf[9 * i + 7], posBuf[9 * i + 8]);
 			t->nc = glm::vec3(norBuf[9 * i + 6], norBuf[9 * i + 7], norBuf[9 * i + 8]);
-			
+		
 			triangles.push_back(t);
 
 		}
 
+		ObjShape* bunny = new ObjShape();
+		bunny->triangles = triangles;
+		bunny->diffuse = glm::vec3(0.0, 0.0, 1.0);
+		bunny->specular = glm::vec3(1.0, 1.0, 0.5);
+		bunny->ambient = glm::vec3(0.1, 0.1, 0.1);
+		bunny->exponent = 100.0;
 
+		Light* l = new Light(glm::vec3(-1.0, 1.0, 1.0), 1.0);
+		lights.push_back(l);
+
+		Image img(imageSize, imageSize);
+		for (int y = 0; y < imageSize; y++) {
+			for (int x = 0; x < imageSize; x++) {
+				glm::vec3 resHP;
+				glm::vec3 resN;
+				Ray* r = rays[y * imageSize + x];
+				if (!bunny->hit(r, resHP, resN)) {
+					continue;
+				}
+				glm::vec3 color = bunny->calcBP(cameraPos, resHP, resN, lights);
+
+				img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
+			}
+		}
+
+		img.writeToFile(outputFileName);
+
+	}
+	else if (scene == 7) {
 
 	}
 
