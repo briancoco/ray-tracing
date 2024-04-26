@@ -13,6 +13,7 @@
 #include "Ellipsoid.cpp"
 #include "Triangle.cpp"
 #include "ObjShape.cpp"
+#include <glm/gtc/matrix_transform.hpp>
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -52,6 +53,26 @@ vector<Ray*> calcRayDirections(glm::vec3 cameraPos, float fov, float aspectRatio
 
 	}
 	return result;
+}
+
+std::vector<Ray*> calcRayDir(glm::vec3 cameraPos, int dimensions, glm::mat4 iP, glm::mat4 iV) {
+	vector<Ray*> results;
+	for (int y = 0; y < dimensions; y++) {
+		for (int x = 0; x < dimensions; x++) {
+			float xn = 1 - (2.0 * x / dimensions);
+			float yn = 1 - (2.0 * y / dimensions);
+			glm::vec4 pc = glm::vec4(xn, yn, -1, 1);
+			glm::vec4 pe = iP * pc;
+			pe[3] = 1.0f;
+			glm::vec3 pw = iV * pe;
+			glm::vec3 rayDir = glm::normalize(pw - cameraPos);
+			Ray* r = new Ray(rayDir, cameraPos);
+			//std::cout << rayDir.x << ", " << rayDir.y << ", " << rayDir.z << std::endl;
+			results.push_back(r);
+		}
+	}
+	std::reverse(results.begin(), results.end());
+	return results;
 }
 
 int main(int argc, char **argv)
@@ -495,6 +516,50 @@ int main(int argc, char **argv)
 		img.writeToFile(outputFileName);
 
 	}
+ else if (scene == 8) {
+	 glm::mat4 P = glm::perspective(glm::radians(60.0f), 1.0f, 0.01f, 10000.0f);
+	 glm::mat4 V = glm::lookAt(glm::vec3(-3, 0, 0), glm::vec3(-3, 0, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	 rays = calcRayDir(glm::vec3(-3, 0, 0), 512, glm::inverse(P), glm::inverse(V));
+
+
+	 Light* light = new Light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
+	 lights.push_back(light);
+
+	 Sphere* redS = new Sphere();
+	 redS->position = glm::vec3(-0.5, -1.0, 1.0);
+	 redS->radius = 1;
+	 redS->diffuse = glm::vec3(1.0, 0.0, 0.0);
+	 redS->specular = glm::vec3(1.0, 1.0, 0.5);
+	 redS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	 redS->exponent = 100.0;
+
+	 Sphere* greenS = new Sphere();
+	 greenS->position = glm::vec3(0.5, -1.0, -1.0);
+	 greenS->radius = 1;
+	 greenS->diffuse = glm::vec3(0.0, 1.0, 0.0);
+	 greenS->specular = glm::vec3(1.0, 1.0, 0.5);
+	 greenS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	 greenS->exponent = 100.0;
+
+	 Sphere* blueS = new Sphere();
+	 blueS->position = glm::vec3(0.0, 1.0, 0.0);
+	 blueS->radius = 1;
+	 blueS->diffuse = glm::vec3(0.0, 0.0, 1.0);
+	 blueS->specular = glm::vec3(1.0, 1.0, 0.5);
+	 blueS->ambient = glm::vec3(0.1, 0.1, 0.1);
+	 blueS->exponent = 100.0;
+
+
+	 shapes.push_back(redS);
+	 shapes.push_back(greenS);
+	 shapes.push_back(blueS);
+
+	 Scene scene(shapes, lights, rays, imageSize, outputFileName);
+	 scene.cameraPos = glm::vec3(-3, 0, 0);
+
+	 scene.draw();
+	 
+}
 
 	
 

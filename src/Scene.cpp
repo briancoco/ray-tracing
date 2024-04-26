@@ -20,6 +20,7 @@ public:
 	std::vector<Ray*> rays;
 	int imageSize;
 	std::string outputFileName;
+	glm::vec3 cameraPos = glm::vec3(0, 0, 5);
 	
 	Scene(std::vector<Shape*> shapes, std::vector<Light*> lights, std::vector<Ray*> rays, int imageSize, std::string outputFileName): shapes(shapes), lights(lights), rays(rays), imageSize(imageSize), outputFileName(outputFileName) {}
 
@@ -49,7 +50,7 @@ public:
 					}
 					
 
-					glm::vec3 closestHP = shapes[i]->calcClosestHit(glm::vec3(0, 0, 5), ts, r);
+					glm::vec3 closestHP = shapes[i]->calcClosestHit(cameraPos, ts, r);
 					if (shapeIdx == -1 || closestHP.z > resHP.z) {
 						resHP = closestHP;
 						shapeIdx = i;
@@ -67,7 +68,7 @@ public:
 				std::vector<Light*> filteredLights = Shape::calcVisibleLights(resHP, lights, shapes);
 
 				//calculate BP coloring for our hitpoint
-				glm::vec3 color = shapes[shapeIdx]->isReflective ? shapes[shapeIdx]->calcRefl(resHP, r, shapes, lights) : shapes[shapeIdx]->calcBP(glm::vec3(0, 0, 5), resHP, filteredLights);
+				glm::vec3 color = shapes[shapeIdx]->isReflective ? shapes[shapeIdx]->calcRefl(resHP, r, shapes, lights) : shapes[shapeIdx]->calcBP(cameraPos, resHP, filteredLights);
 				
 				img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
 
