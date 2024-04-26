@@ -30,7 +30,7 @@
 /* the original jgt code */
 
 
-class ObjShape{
+class ObjShape {
 public:
 
     std::vector<Triangle*> triangles;
@@ -83,6 +83,63 @@ public:
         return 1;
     }
 
+    bool hitWithTransform(Ray* r, glm::vec3& resHP, glm::vec3& resN, glm::mat4 transformMat) {
+        //convert ray to local coordinates
+        glm::mat4 inverseTransformMat = glm::inverse(transformMat);
+        glm::vec3 localRayOrigin = inverseTransformMat * glm::vec4(r->rayOrigin, 1.0f);
+        glm::vec3 localRayDir = inverseTransformMat * glm::vec4(r->rayDir, 0.0f);
+        localRayDir = glm::normalize(localRayDir);
+
+        double orig[] = { localRayOrigin.x, localRayOrigin.y, localRayOrigin.z };
+        double dir[] = { localRayDir.x, localRayDir.y, localRayDir.z };
+
+        bool first = true;
+        glm::vec3 origin = glm::vec3(0, 0, 5);
+
+        for (size_t i = 0; i < triangles.size(); i++) {
+            double t;
+            double ba;
+            double bb;
+            double bc;
+
+            double vec0[] = { triangles[i]->a.x, triangles[i]->a.y, triangles[i]->a.z };
+            double vec1[] = { triangles[i]->b.x, triangles[i]->b.y, triangles[i]->b.z };
+            double vec2[] = { triangles[i]->c.x, triangles[i]->c.y, triangles[i]->c.z };
+
+            if (intersect_triangle(orig, dir, vec0, vec1, vec2, &t, &bb, &bc)) {
+                ba = 1 - bb - bc;
+
+                glm::vec3 hitPoint = triangles[i]->a * (float)ba + triangles[i]->b * (float)bb + triangles[i]->c * (float)bc;
+                hitPoint = transformMat * glm::vec4(hitPoint, 1.0f);
+
+
+                t = glm::length(hitPoint - r->rayOrigin);
+                if (glm::dot(r->rayDir, hitPoint - r->rayOrigin) < 0) {
+                    t = -t;
+                }
+
+                if (t >= 0 && (first || glm::length(hitPoint - origin) < glm::length(resHP - origin))) {
+
+
+                    resHP = hitPoint;
+                    resN = triangles[i]->na * (float)ba + triangles[i]->nb * (float)bb + triangles[i]->nc * (float)bc;
+                    resN = glm::inverse(glm::transpose(transformMat)) * glm::vec4(resN, 0.0f);
+                    resN = glm::normalize(resN);
+
+                    first = false;
+                }
+            }
+
+
+
+        }
+
+        return !first;
+
+        
+
+    }
+
     bool hit(Ray* r, glm::vec3& resHP, glm::vec3& resN) {
         //traverse thru triangles that make up our obj file
         //for each triangle, use the provided fn to calculate intersections
@@ -112,12 +169,11 @@ public:
 
             if (intersect_triangle(orig, dir, vec0, vec1, vec2, &t, &bb, &bc)) {
                 ba = 1 - bb - bc;
-                
+
                 glm::vec3 hitPoint = triangles[i]->a * (float)ba + triangles[i]->b * (float)bb + triangles[i]->c * (float)bc;
 
                 if (t >= 0 && (first || glm::length(hitPoint - origin) < glm::length(resHP - origin))) {
-                    
-                   
+
 
                     resHP = hitPoint;
                     resN = triangles[i]->na * (float)ba + triangles[i]->nb * (float)bb + triangles[i]->nc * (float)bc;
@@ -127,14 +183,14 @@ public:
                 }
             }
 
-            
+
 
         }
 
         return !first;
 
     }
-   
+
     glm::vec3 calcBP(glm::vec3 cameraPos, glm::vec3 x, glm::vec3 n, std::vector<Light*> lights) {
         glm::vec3 result(0.0f, 0.0f, 0.0f);
 

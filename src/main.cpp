@@ -290,14 +290,83 @@ int main(int argc, char **argv)
 
 		}
 
+		//calculating mesh's bounding box
+		float xmin = posBuf[0];
+		float xmax = posBuf[0];
+		float ymin = posBuf[1];
+		float ymax = posBuf[1];
+		float zmin = posBuf[2];
+		float zmax = posBuf[2];
+
+		for (size_t i = 0; i < triangles.size(); i++) {
+			//get the bounding box for the given triangle
+			//compare it's values to see if they're smaller than the global
+			// if yes replace global
+
+			float* boundingBox = triangles[i]->getBoundingBox();
+			float txmin = boundingBox[0];
+			float txmax = boundingBox[1];
+			float tymin = boundingBox[2];
+			float tymax = boundingBox[3];
+			float tzmin = boundingBox[4];
+			float tzmax = boundingBox[5];
+
+			if (txmin < xmin) {
+				xmin = txmin;
+			}
+			if (txmax > xmax) {
+				xmax = txmax;
+			}
+			if (tymin < ymin) {
+				ymin = tymin;
+			}
+			if (tymax > ymax) {
+				ymax = tymax;
+			}
+			if (tzmin < zmin) {
+				zmin = tzmin;
+			}
+			if (tzmax > zmax) {
+				zmax = tzmax;
+			}
+
+		}
+
 		ObjShape* bunny = new ObjShape();
 		bunny->triangles = triangles;
 		bunny->diffuse = glm::vec3(0.0, 0.0, 1.0);
 		bunny->specular = glm::vec3(1.0, 1.0, 0.5);
 		bunny->ambient = glm::vec3(0.1, 0.1, 0.1);
 		bunny->exponent = 100.0;
+		bunny->transform = false;
 
-		Light* l = new Light(glm::vec3(-1.0, 1.0, 1.0), 1.0);
+		glm::vec3 boundingSpherePos = glm::vec3((xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2);
+		float radius = -1;
+		
+		for (size_t i = 0; i < triangles.size(); i++) {
+			//for the verticies that make up the triangle
+			//calculate the distance from the bounding sphere position to the vertex
+			//if that distance is greater than the current radius set it as new radius
+			float ra = glm::length(triangles[i]->a - boundingSpherePos);
+			float rb = glm::length(triangles[i]->b - boundingSpherePos);
+			float rc = glm::length(triangles[i]->c - boundingSpherePos);
+			if (ra > radius) {
+				radius = ra;
+			}
+			if (rb > radius) {
+				radius = rb;
+			}
+			if (rc > radius) {
+				radius = rc;
+			}
+		}
+
+		Sphere* boundingSphere = new Sphere();
+		boundingSphere->position = boundingSpherePos;
+		boundingSphere->radius = radius;
+
+
+		Light* l = new Light(scene == 6 ? glm::vec3(-1.0, 1.0, 1.0) : glm::vec3(1.0, 1.0, 2.0), 1.0);
 		lights.push_back(l);
 
 		Image img(imageSize, imageSize);
@@ -306,7 +375,8 @@ int main(int argc, char **argv)
 				glm::vec3 resHP;
 				glm::vec3 resN;
 				Ray* r = rays[y * imageSize + x];
-				if (!bunny->hit(r, resHP, resN)) {
+				std::vector<float> ts = boundingSphere->calcT(r);
+				if (ts.empty() || !bunny->hit(r, resHP, resN)) {
 					continue;
 				}
 				glm::vec3 color = bunny->calcBP(cameraPos, resHP, resN, lights);
@@ -319,6 +389,110 @@ int main(int argc, char **argv)
 
 	}
 	else if (scene == 7) {
+		// Load geometry
+		vector<float> posBuf; // list of vertex positions
+		vector<float> norBuf; // list of vertex normals
+		vector<float> texBuf; // list of vertex texture coords
+		tinyobj::attrib_t attrib;
+		std::vector<tinyobj::shape_t> shapes;
+		std::vector<tinyobj::material_t> materials;
+		string errStr;
+		string meshName = "../resources/bunny.obj";
+		bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &errStr, meshName.c_str());
+		if (!rc) {
+			cerr << errStr << endl;
+		}
+		else {
+			// Some OBJ files have different indices for vertex positions, normals,
+			// and texture coordinates. For example, a cube corner vertex may have
+			// three different normals. Here, we are going to duplicate all such
+			// vertices.
+			// Loop over shapes
+			for (size_t s = 0; s < shapes.size(); s++) {
+				// Loop over faces (polygons)
+				size_t index_offset = 0;
+				for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+					size_t fv = shapes[s].mesh.num_face_vertices[f];
+					// Loop over vertices in the face.
+					for (size_t v = 0; v < fv; v++) {
+						// access to vertex
+						tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+						posBuf.push_back(attrib.vertices[3 * idx.vertex_index + 0]);
+						posBuf.push_back(attrib.vertices[3 * idx.vertex_index + 1]);
+						posBuf.push_back(attrib.vertices[3 * idx.vertex_index + 2]);
+						if (!attrib.normals.empty()) {
+							norBuf.push_back(attrib.normals[3 * idx.normal_index + 0]);
+							norBuf.push_back(attrib.normals[3 * idx.normal_index + 1]);
+							norBuf.push_back(attrib.normals[3 * idx.normal_index + 2]);
+						}
+						if (!attrib.texcoords.empty()) {
+							texBuf.push_back(attrib.texcoords[2 * idx.texcoord_index + 0]);
+							texBuf.push_back(attrib.texcoords[2 * idx.texcoord_index + 1]);
+						}
+					}
+					index_offset += fv;
+					// per-face material (IGNORE)
+					shapes[s].mesh.material_ids[f];
+				}
+			}
+
+		}
+
+		cout << "Number of vertices: " << posBuf.size() / 3 << endl;
+
+		//construct triangles vector
+		std::vector<Triangle*> triangles;
+		int numTriangles = posBuf.size() / 9;
+
+		//traverse thru position and normal buffers constructing triangle objects for each triangle
+		for (int i = 0; i < numTriangles; i++) {
+			Triangle* t = new Triangle();
+			t->a = glm::vec3(posBuf[9 * i + 0], posBuf[9 * i + 1], posBuf[9 * i + 2]);
+			t->na = glm::vec3(norBuf[9 * i + 0], norBuf[9 * i + 1], norBuf[9 * i + 2]);
+			t->b = glm::vec3(posBuf[9 * i + 3], posBuf[9 * i + 4], posBuf[9 * i + 5]);
+			t->nb = glm::vec3(norBuf[9 * i + 3], norBuf[9 * i + 4], norBuf[9 * i + 5]);
+			t->c = glm::vec3(posBuf[9 * i + 6], posBuf[9 * i + 7], posBuf[9 * i + 8]);
+			t->nc = glm::vec3(norBuf[9 * i + 6], norBuf[9 * i + 7], norBuf[9 * i + 8]);
+
+			triangles.push_back(t);
+
+		}
+
+		Light* l1 = new Light(glm::vec3(1.0, 1.0, 2.0), 1.0);
+		lights.push_back(l1);
+
+		ObjShape* bunny = new ObjShape();
+		bunny->triangles = triangles;
+		bunny->diffuse = glm::vec3(0.0, 0.0, 1.0);
+		bunny->specular = glm::vec3(1.0, 1.0, 0.5);
+		bunny->ambient = glm::vec3(0.1, 0.1, 0.1);
+		bunny->exponent = 100.0;
+		bunny->transform = true;
+
+		glm::mat4 transformMat(
+			1.5000,         0,         0,    0.3000,
+			0,    1.4095, -0.5130, -1.5000,
+			0,    0.5130,    1.4095,        0,
+			0,        0,         0,    1.0000
+		);
+		transformMat = glm::transpose(transformMat);
+
+		Image img(imageSize, imageSize);
+		for (int y = 0; y < imageSize; y++) {
+			for (int x = 0; x < imageSize; x++) {
+				glm::vec3 resHP;
+				glm::vec3 resN;
+				Ray* r = rays[y * imageSize + x];
+				if (!bunny->hitWithTransform(r, resHP, resN, transformMat)) {
+					continue;
+				}
+				glm::vec3 color = bunny->calcBP(cameraPos, resHP, resN, lights);
+
+				img.setPixel(x, y, 255 * color.r, 255 * color.g, 255 * color.b);
+			}
+		}
+
+		img.writeToFile(outputFileName);
 
 	}
 
