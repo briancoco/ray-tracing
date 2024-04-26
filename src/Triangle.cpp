@@ -23,60 +23,64 @@ public:
 	glm::vec3 nb;
 	glm::vec3 nc;
 
-	float* Triangle::getBoundingBox() {
-		float xmin = a.x;
-		float xmax = a.x;
-		float ymin = a.y;
-		float ymax = a.y;
-		float zmin = a.z;
-		float zmax = a.z;
+	float* Triangle::getBoundingBox(glm::mat4 transformMat = glm::mat4(1.0f)) {
+		glm::vec3 ta = transformMat * glm::vec4(a, 1.0f);
+		glm::vec3 tb = transformMat * glm::vec4(b, 1.0f);
+		glm::vec3 tc = transformMat * glm::vec4(c, 1.0f);
+
+		float xmin = ta.x;
+		float xmax = ta.x;
+		float ymin = tb.y;
+		float ymax = tb.y;
+		float zmin = tc.z;
+		float zmax = tc.z;
 
 		//xmin
-		if (b.x < xmin) {
-			xmin = b.x;
+		if (tb.x < xmin) {
+			xmin = tb.x;
 		}
-		if (c.x < xmin) {
-			xmin = c.x;
+		if (tc.x < xmin) {
+			xmin = tc.x;
 		}
 
 		//xmax
-		if (b.x > xmax) {
-			xmax = b.x;
+		if (tb.x > xmax) {
+			xmax = tb.x;
 		}
-		if (c.x > xmax) {
-			xmax = c.x;
+		if (tc.x > xmax) {
+			xmax = tc.x;
 		}
 
 		//ymin
-		if (b.y < ymin) {
-			ymin = b.y;
+		if (tb.y < ymin) {
+			ymin = tb.y;
 		}
-		if (c.y < ymin) {
-			ymin = c.y;
+		if (tc.y < ymin) {
+			ymin = tc.y;
 		}
 
 		//ymax
-		if (b.y > ymax) {
-			ymax = b.y;
+		if (tb.y > ymax) {
+			ymax = tb.y;
 		}
-		if (c.y > ymax) {
-			ymax = c.y;
+		if (tc.y > ymax) {
+			ymax = tc.y;
 		}
 
 		//zmin
-		if (b.z < zmin) {
-			zmin = b.z;
+		if (tb.z < zmin) {
+			zmin = tb.z;
 		}
-		if (c.z < zmin) {
-			zmin = c.z;
+		if (tc.z < zmin) {
+			zmin = tc.z;
 		}
 
 		//zmax
-		if (b.z > zmax) {
-			zmax = b.z;
+		if (tb.z > zmax) {
+			zmax = tb.z;
 		}
-		if (c.z > zmax) {
-			zmax = c.z;
+		if (tc.z > zmax) {
+			zmax = tc.z;
 		}
 
 

@@ -306,7 +306,7 @@ int main(int argc, char **argv)
 			t->nb = glm::vec3(norBuf[9 * i + 3], norBuf[9 * i + 4], norBuf[9 * i + 5]);
 			t->c = glm::vec3(posBuf[9 * i + 6], posBuf[9 * i + 7], posBuf[9 * i + 8]);
 			t->nc = glm::vec3(norBuf[9 * i + 6], norBuf[9 * i + 7], norBuf[9 * i + 8]);
-		
+
 			triangles.push_back(t);
 
 		}
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
 
 		glm::vec3 boundingSpherePos = glm::vec3((xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2);
 		float radius = -1;
-		
+
 		for (size_t i = 0; i < triangles.size(); i++) {
 			//for the verticies that make up the triangle
 			//calculate the distance from the bounding sphere position to the vertex
@@ -491,12 +491,94 @@ int main(int argc, char **argv)
 		bunny->transform = true;
 
 		glm::mat4 transformMat(
-			1.5000,         0,         0,    0.3000,
-			0,    1.4095, -0.5130, -1.5000,
-			0,    0.5130,    1.4095,        0,
-			0,        0,         0,    1.0000
+			1.5000, 0, 0, 0.3000,
+			0, 1.4095, -0.5130, -1.5000,
+			0, 0.5130, 1.4095, 0,
+			0, 0, 0, 1.0000
 		);
 		transformMat = glm::transpose(transformMat);
+
+		//calculating mesh's bounding box
+
+		bool firstxmax = true;
+		bool firstxmin = true;
+		bool firstymax = true;
+		bool firstymin = true;
+		bool firstzmax = true;
+		bool firstzmin = true;
+
+		float xmin = posBuf[0];
+		float xmax = posBuf[0];
+		float ymin = posBuf[1];
+		float ymax = posBuf[1];
+		float zmin = posBuf[2];
+		float zmax = posBuf[2];
+
+		for (size_t i = 0; i < triangles.size(); i++) {
+			//get the bounding box for the given triangle
+			//compare it's values to see if they're smaller than the global
+			// if yes replace global
+
+			float* boundingBox = triangles[i]->getBoundingBox(transformMat);
+			float txmin = boundingBox[0];
+			float txmax = boundingBox[1];
+			float tymin = boundingBox[2];
+			float tymax = boundingBox[3];
+			float tzmin = boundingBox[4];
+			float tzmax = boundingBox[5];
+
+			if (firstxmin || txmin < xmin) {
+				xmin = txmin;
+				firstxmin = false;
+			}
+			if (firstxmax || txmax > xmax) {
+				xmax = txmax;
+				firstxmax = false;
+			}
+			if (firstymin || tymin < ymin) {
+				ymin = tymin;
+				firstymin = false;
+			}
+			if (firstymax || tymax > ymax) {
+				ymax = tymax;
+				firstymax = false;
+			}
+			if (firstzmin || tzmin < zmin) {
+				zmin = tzmin;
+				firstzmin = false;
+			}
+			if (firstzmax || tzmax > zmax) {
+				zmax = tzmax;
+				firstzmax = false;
+			}
+
+		}
+
+		glm::vec3 boundingSpherePos = glm::vec3((xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2);
+		float radius = -1;
+
+		for (size_t i = 0; i < triangles.size(); i++) {
+			//for the verticies that make up the triangle
+			//calculate the distance from the bounding sphere position to the vertex
+			//if that distance is greater than the current radius set it as new radius
+
+			float ra = glm::length(glm::vec3(transformMat * glm::vec4(triangles[i]->a, 1.0f)) - boundingSpherePos);
+			float rb = glm::length(glm::vec3(transformMat * glm::vec4(triangles[i]->b, 1.0f)) - boundingSpherePos);
+			float rc = glm::length(glm::vec3(transformMat * glm::vec4(triangles[i]->c, 1.0f)) - boundingSpherePos);
+			if (ra > radius) {
+				radius = ra;
+			}
+			if (rb > radius) {
+				radius = rb;
+			}
+			if (rc > radius) {
+				radius = rc;
+			}
+		}
+
+		Sphere* boundingSphere = new Sphere();
+		boundingSphere->position = boundingSpherePos;
+		boundingSphere->radius = radius;
 
 		Image img(imageSize, imageSize);
 		for (int y = 0; y < imageSize; y++) {
@@ -504,7 +586,8 @@ int main(int argc, char **argv)
 				glm::vec3 resHP;
 				glm::vec3 resN;
 				Ray* r = rays[y * imageSize + x];
-				if (!bunny->hitWithTransform(r, resHP, resN, transformMat)) {
+				std::vector<float> ts = boundingSphere->calcT(r);
+				if (ts.empty() || !bunny->hitWithTransform(r, resHP, resN, transformMat)) {
 					continue;
 				}
 				glm::vec3 color = bunny->calcBP(cameraPos, resHP, resN, lights);
@@ -519,7 +602,7 @@ int main(int argc, char **argv)
  else if (scene == 8) {
 	 glm::mat4 P = glm::perspective(glm::radians(60.0f), 1.0f, 0.01f, 10000.0f);
 	 glm::mat4 V = glm::lookAt(glm::vec3(-3, 0, 0), glm::vec3(-3, 0, 0) + glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-	 rays = calcRayDir(glm::vec3(-3, 0, 0), 512, glm::inverse(P), glm::inverse(V));
+	 rays = calcRayDir(glm::vec3(-3, 0, 0), imageSize, glm::inverse(P), glm::inverse(V));
 
 
 	 Light* light = new Light(glm::vec3(-2.0, 1.0, 1.0), 1.0);
